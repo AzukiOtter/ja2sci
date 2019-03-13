@@ -8,7 +8,7 @@ with (here/'README.md').open(encoding='utf-8') as f:
 
 setup(
     name='ja2sci',
-    version='0.1.1.post1',
+    version='0.1.2',
     description='Translate Japanese name into scientific name',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -19,6 +19,7 @@ setup(
     keywords='biology species',
     python_requires='>=3.6, <4',
     packages=['ja2sci'],
+    package_data={'ja2sci': ['dictionary/ja2sci.pkl']},
     install_requires=['aiohttp>=3.3.0'],
     entry_points={
         'console_scripts':[
