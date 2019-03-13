@@ -18,7 +18,7 @@ Lutra lutra nippon
 ```python
 >>> import ja2sci
 >>> ja2sci.translate('ユーラシアカワウソ')
-'Lutra lutra
+'Lutra lutra'
 ```
 
 ### Advanced usage: asynchronous translation
@@ -31,5 +31,5 @@ Lutra lutra nippon
 ...     ja2sci.async_translate('ミンク')      # Not on internal dictionary
 ... ))
 >>> print(results)
-['Lutra canadensis', 'Pteronura brasiliensis']
+['Martes melampus melampus', 'Neovison vison']
 ```
