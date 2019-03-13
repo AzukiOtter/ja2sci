@@ -19,7 +19,12 @@ setup(
     keywords='biology species',
     python_requires='>=3.6, <4',
     packages=['ja2sci'],
-    install_requires=[],
+    install_requires=['aiohttp>=3.3.0'],
+    entry_points={
+        'console_scripts':[
+            'ja2sci = ja2sci.main:commandline',
+        ]
+    },
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
