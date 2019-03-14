@@ -20,18 +20,18 @@ wikipedia_regex = [
 ]
 
 
-def translate(name: str) -> str:
+def translate(name: str, debug: bool =False) -> str:
     try:
         return from_dict(name)
     except TranslationError:
-        return from_wikipedia(name)
+        return from_wikipedia(name, debug)
 
 
-async def async_translate(name: str) -> str:
+async def async_translate(name: str, debug: bool =False) -> str:
     try:
         return from_dict(name)
     except TranslationError:
-        return await from_wikipedia_async(name)
+        return await from_wikipedia_async(name, debug)
 
 
 def from_dict(name: str) -> str:
@@ -42,15 +42,22 @@ def from_dict(name: str) -> str:
         raise TranslationError('{} does not exist in the dictionary.')
 
 
-def __interpret_wikipedia(content: dict, name: str) -> str:
+def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> str:
     if '-1' in content['query']['pages'].keys():
         raise TranslationError('No Wikipedia page named {}.'.format(name))
     pages = content['query']['pages']
     page_content = [pages[page]['revisions'][0]['*'] for page in pages][0]
 
+    if debug:
+        print(f'============== PAGE CONTENT OF {name} ==============')
+        print(page_content)
+        print(f'====================================================')
+
     # raise RedirectException when #REDIRECT is found
     if page_content.startswith('#REDIRECT'):
         redirect_name = re.search(r'#REDIRECT *\[\[([^\]]+)\]\]', page_content).group(1)
+        if debug:
+            print(f'REDIRECTING: {name} -> {redirect_name}')
         raise RedirectException(redirect_name)
 
     for regex in wikipedia_regex:
@@ -61,7 +68,7 @@ def __interpret_wikipedia(content: dict, name: str) -> str:
     raise TranslationError('{} exists in Wikipedia, but no scientific name found in the page.'.format(name))
 
 
-def from_wikipedia(name: str) -> str:
+def from_wikipedia(name: str, debug: bool =False) -> str:
     """Get Wikipedia page and find scientific name"""
     while True:
         titles = urllib.parse.quote(name)
@@ -69,12 +76,12 @@ def from_wikipedia(name: str) -> str:
         response = urllib.request.urlopen(url)
         content = json.loads(response.read().decode('utf8'))
         try:
-            return __interpret_wikipedia(content, name)
+            return __interpret_wikipedia(content, name, debug)
         except RedirectException as redirect:
             name = redirect.name
 
 
-async def from_wikipedia_async(name: str) -> str:
+async def from_wikipedia_async(name: str, debug: bool =False) -> str:
     """Get Wikipedia page and find scientific name asynchronously"""
     while True:
         titles = urllib.parse.quote(name)
@@ -83,7 +90,7 @@ async def from_wikipedia_async(name: str) -> str:
             async with session.get(url) as resp:
                 content = json.loads(await resp.text())
         try:
-            return __interpret_wikipedia(content, name)
+            return __interpret_wikipedia(content, name, debug)
         except RedirectException as redirect:
             name = redirect.name
 
