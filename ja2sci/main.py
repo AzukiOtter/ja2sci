@@ -46,31 +46,46 @@ def __interpret_wikipedia(content: dict, name: str) -> str:
     if '-1' in content['query']['pages'].keys():
         raise TranslationError('No Wikipedia page named {}.'.format(name))
     pages = content['query']['pages']
-    pagecontent = [pages[page]['revisions'][0]['*'] for page in pages][0]
+    page_content = [pages[page]['revisions'][0]['*'] for page in pages][0]
+
+    # raise RedirectException when #REDIRECT is found
+    if page_content.startswith('#REDIRECT'):
+        redirect_name = re.search(r'#REDIRECT *\[\[([^\]]+)\]\]', page_content).group(1)
+        raise RedirectException(redirect_name)
+
     for regex in wikipedia_regex:
-        match = regex.search(pagecontent)
+        match = regex.search(page_content)
         if match:
             return match.group(2)
+
     raise TranslationError('{} exists in Wikipedia, but no scientific name found in the page.'.format(name))
 
 
 def from_wikipedia(name: str) -> str:
     """Get Wikipedia page and find scientific name"""
-    titles = urllib.parse.quote(name)
-    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles={}'.format(titles)
-    response = urllib.request.urlopen(url)
-    content = json.loads(response.read().decode('utf8'))
-    return __interpret_wikipedia(content, name)
+    while True:
+        titles = urllib.parse.quote(name)
+        url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles={}'.format(titles)
+        response = urllib.request.urlopen(url)
+        content = json.loads(response.read().decode('utf8'))
+        try:
+            return __interpret_wikipedia(content, name)
+        except RedirectException as redirect:
+            name = redirect.name
 
 
 async def from_wikipedia_async(name: str) -> str:
     """Get Wikipedia page and find scientific name asynchronously"""
-    titles = urllib.parse.quote(name)
-    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles={}'.format(titles)
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as resp:
-            content = json.loads(await resp.text())
-    return __interpret_wikipedia(content, name)
+    while True:
+        titles = urllib.parse.quote(name)
+        url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&titles={}'.format(titles)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as resp:
+                content = json.loads(await resp.text())
+        try:
+            return __interpret_wikipedia(content, name)
+        except RedirectException as redirect:
+            name = redirect.name
 
 
 def commandline():
@@ -78,5 +93,12 @@ def commandline():
     print(translate(sys.argv[1]))
 
 
-class TranslationError(Exception):
+class BaseTranslationError(Exception):
     pass
+
+class TranslationError(BaseTranslationError):
+    pass
+
+class RedirectException(BaseTranslationError):
+    def __init__(self, name):
+        self.name = name
