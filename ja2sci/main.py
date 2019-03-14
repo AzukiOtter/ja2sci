@@ -15,8 +15,8 @@ with (here / dictionary_path).open('rb') as f:
 
 wikipedia_regex = [
     re.compile(r"学名 ?= ?('+)([^']+)\1"),
-    re.compile(r"学名 ?= ?('*)\{\{Snamei\|([^}]+)\}\}\1"),
-    re.compile(r"学名 ?= ?('*)\{\{sname[^}]*\|([^}|]+)\}\}\1"),
+    re.compile(r"学名 ?= ?('*){{Snamei\|([^}]+)}}\1"),
+    re.compile(r"学名 ?= ?('*){{sname[^}]*\|([^}|]+)}}\1"),
 ]
 
 
