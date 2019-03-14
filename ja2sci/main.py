@@ -41,7 +41,7 @@ def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> Union
 
     # Gets the first page from pages
     page = next(i for i in content['query']['pages'].values())
-    page_content = page['revisions'][0]['*']
+    page_content = page['revisions'][0]['slots']['main']['*']
 
     if debug:
         if "redirects" in content['query']:
@@ -64,7 +64,7 @@ def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> Union
 def from_wikipedia(name: str, debug: bool =False) -> Union[str, None]:
     """Get Wikipedia page and find scientific name"""
     titles = urllib.parse.quote(name)
-    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&redirects&titles={}'.format(titles)
+    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&redirects&rvslots=main&titles={}'.format(titles)
     response = urllib.request.urlopen(url)
     content = json.loads(response.read().decode('utf8'))
     return __interpret_wikipedia(content, name, debug)
@@ -73,7 +73,7 @@ def from_wikipedia(name: str, debug: bool =False) -> Union[str, None]:
 async def from_wikipedia_async(name: str, debug: bool =False) -> Union[str, None]:
     """Get Wikipedia page and find scientific name asynchronously"""
     titles = urllib.parse.quote(name)
-    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&redirects&titles={}'.format(titles)
+    url = 'https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=revisions&rvprop=content&redirects&rvslots=main&titles={}'.format(titles)
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as resp:
             content = json.loads(await resp.text())
