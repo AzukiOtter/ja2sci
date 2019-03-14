@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 from pathlib import Path
 import pickle
 import urllib.request
@@ -21,30 +21,23 @@ wikipedia_regex = [
 
 
 def translate(name: str, debug: bool =False) -> str:
-    try:
-        return from_dict(name)
-    except TranslationError:
-        return from_wikipedia(name, debug)
+    return from_dict(name) or from_wikipedia(name, debug) or None
 
 
 async def async_translate(name: str, debug: bool =False) -> str:
-    try:
-        return from_dict(name)
-    except TranslationError:
-        return await from_wikipedia_async(name, debug)
+    return from_dict(name) or await from_wikipedia_async(name, debug) or None
 
 
 def from_dict(name: str) -> str:
     """Translate Japanese name into scientific name via offline dictionary"""
-    try:
-        return dictionary[name]
-    except KeyError:
-        raise TranslationError('{} does not exist in the dictionary.')
+    return dictionary.get(name)
 
 
-def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> str:
+def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> Union[str, None]:
     if '-1' in content['query']['pages'].keys():
-        raise TranslationError('No Wikipedia page named {}.'.format(name))
+        if debug:
+            print('No Wikipedia page named {}.'.format(name))
+        return None
     pages = content['query']['pages']
     page_content = [pages[page]['revisions'][0]['*'] for page in pages][0]
 
@@ -65,10 +58,12 @@ def __interpret_wikipedia(content: dict, name: str, debug: bool =False) -> str:
         if match:
             return match.group(2)
 
-    raise TranslationError('{} exists in Wikipedia, but no scientific name found in the page.'.format(name))
+    if debug:
+        print('{} exists in Wikipedia, but no scientific name found in the page.'.format(name))
+    return None
 
 
-def from_wikipedia(name: str, debug: bool =False) -> str:
+def from_wikipedia(name: str, debug: bool =False) -> Union[str, None]:
     """Get Wikipedia page and find scientific name"""
     while True:
         titles = urllib.parse.quote(name)
@@ -81,7 +76,7 @@ def from_wikipedia(name: str, debug: bool =False) -> str:
             name = redirect.name
 
 
-async def from_wikipedia_async(name: str, debug: bool =False) -> str:
+async def from_wikipedia_async(name: str, debug: bool =False) -> Union[str, None]:
     """Get Wikipedia page and find scientific name asynchronously"""
     while True:
         titles = urllib.parse.quote(name)
@@ -101,9 +96,6 @@ def commandline():
 
 
 class BaseTranslationError(Exception):
-    pass
-
-class TranslationError(BaseTranslationError):
     pass
 
 class RedirectException(BaseTranslationError):
