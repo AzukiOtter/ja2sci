@@ -83,7 +83,3 @@ async def from_wikipedia_async(name: str, debug: bool =False) -> Union[str, None
 def commandline():
     import sys
     print(translate(sys.argv[1]))
-
-
-class BaseTranslationError(Exception):
-    pass
